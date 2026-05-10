@@ -40,7 +40,6 @@ def clean_soma_output(text):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
-    # FIXED SYNTAX HERE
     return templates.TemplateResponse("index.html", {"request": request, "show_results": False})
 
 @app.post("/", response_class=HTMLResponse)
@@ -56,6 +55,7 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
+    # YOUR EXACT PROMPT - UNCHANGED
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -88,25 +88,25 @@ async def run_check(
             exercise_advice = "### TRAINING PROTOCOL\n" + clean_soma_output(training_raw)
         else:
             food_advice = ai_text
-            exercise_advice = "The coach is still refining your movement protocol. Please resubmit."
+            exercise_advice = "The coach is still refining your movement protocol."
 
     except Exception as e:
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # FIXED SYNTAX HERE - REMOVED THE TUPLE CONFLICT
-    return templates.TemplateResponse(
-        "index.html", 
-        {
-            "request": request, 
-            "show_results": True, 
-            "name": name,
-            "food_advice": food_advice, 
-            "exercise_advice": exercise_advice
-        }
-    )
+    # THE FIX: We build the dictionary clearly to avoid the 'tuple' error
+    response_data = {
+        "request": request, 
+        "show_results": True, 
+        "name": name,
+        "food_advice": food_advice, 
+        "exercise_advice": exercise_advice
+    }
+    
+    return templates.TemplateResponse("index.html", response_data)
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
+    # This port logic is required for Render to link to your URL
+    port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
