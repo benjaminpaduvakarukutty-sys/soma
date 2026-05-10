@@ -42,7 +42,12 @@ def clean_soma_output(text):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "show_results": False})
+    # FIXED: Using explicit keyword arguments to avoid 'unhashable dict' error
+    return templates.TemplateResponse(
+        request=request, 
+        name="index.html", 
+        context={"show_results": False}
+    )
 
 @app.post("/", response_class=HTMLResponse)
 async def run_check(
@@ -57,7 +62,6 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
-    # YOUR EXACT SOMA INSTRUCTIONS - UNCHANGED
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -81,36 +85,34 @@ async def run_check(
             temperature=0.7
         )
         ai_text = response.choices[0].message.content
-        
         parts = ai_text.split("[TRAINING_START]")
         
         if len(parts) > 1:
             food_raw = parts[0].replace("[WEIGHT ANALYSIS]", "### YOUR STATUS").replace("[FOOD]", "### NUTRITIONAL TIMING")
             training_raw = parts[1].replace("[RECOVERY]", "### SLEEP & RECOVERY").replace("[SUMMARY]", "### FINAL HEALTH GRADE")
-            
             food_advice = clean_soma_output(food_raw)
             exercise_advice = "### TRAINING PROTOCOL\n" + clean_soma_output(training_raw)
         else:
             food_advice = ai_text
-            exercise_advice = "The coach is still refining your movement protocol. Please resubmit."
+            exercise_advice = "The coach is still refining your movement protocol."
 
     except Exception as e:
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # BUILDING CONTEXT CLEARLY
-    context = {
-        "request": request, 
-        "show_results": True, 
-        "name": name,
-        "food_advice": food_advice, 
-        "exercise_advice": exercise_advice
-    }
-
-    return templates.TemplateResponse("index.html", context)
+    # FIXED: Passing context correctly using the modern FastAPI/Starlette style
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "show_results": True,
+            "name": name,
+            "food_advice": food_advice,
+            "exercise_advice": exercise_advice
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
-    # Render requires a dynamic port
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
