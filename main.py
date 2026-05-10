@@ -19,7 +19,6 @@ client = OpenAI(api_key=api_key)
 app = FastAPI()
 
 # 2. PATH CONFIGURATION
-# Using absolute paths to ensure Render finds folders correctly
 current_dir = os.path.dirname(os.path.realpath(__file__))
 static_path = os.path.join(current_dir, "static")
 template_path = os.path.join(current_dir, "templates")
@@ -43,7 +42,6 @@ def clean_soma_output(text):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
-    # Fixed syntax for Jinja2 compatibility
     return templates.TemplateResponse("index.html", {"request": request, "show_results": False})
 
 @app.post("/", response_class=HTMLResponse)
@@ -59,7 +57,7 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
-    # YOUR EXACT SOMA INSTRUCTIONS
+    # YOUR EXACT SOMA INSTRUCTIONS - UNCHANGED
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -77,14 +75,13 @@ async def run_check(
         response = client.chat.completions.create(
             model='gpt-4o-mini',
             messages=[
-                {{"role": "system", "content": "You are SOMA, an elite performance coach. Speak like a human mentor, not a robot. You MUST separate the Food section from the Training section using the exact tag [TRAINING_START]. Part 1 is Weight & Food. Part 2 is Training, Sleep & Summary."}},
-                {{"role": "user", "content": prompt}}
+                {"role": "system", "content": "You are SOMA, an elite performance coach. Speak like a human mentor, not a robot. You MUST separate the Food section from the Training section using the exact tag [TRAINING_START]. Part 1 is Weight & Food. Part 2 is Training, Sleep & Summary."},
+                {"role": "user", "content": prompt}
             ],
             temperature=0.7
         )
         ai_text = response.choices[0].message.content
         
-        # Split logic using your high-performance tag
         parts = ai_text.split("[TRAINING_START]")
         
         if len(parts) > 1:
@@ -101,14 +98,14 @@ async def run_check(
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # Building the context dictionary clearly to prevent the 'tuple' error
-    context = {{
+    # BUILDING CONTEXT CLEARLY
+    context = {
         "request": request, 
         "show_results": True, 
         "name": name,
         "food_advice": food_advice, 
         "exercise_advice": exercise_advice
-    }}
+    }
 
     return templates.TemplateResponse("index.html", context)
 
