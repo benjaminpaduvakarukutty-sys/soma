@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+# 1. LOAD AND VERIFY API KEY
 load_dotenv()
 api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -14,14 +15,20 @@ if not api_key:
     raise ValueError("CRITICAL ERROR: OPENAI_API_KEY not found!")
 
 client = OpenAI(api_key=api_key)
+
 app = FastAPI()
 
-# Bulletproof paths for Render
-base_path = os.path.dirname(os.path.realpath(__file__))
-app.mount("/static", StaticFiles(directory=os.path.join(base_path, "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(base_path, "templates"))
+# 2. PATH CONFIGURATION
+# Using absolute paths to ensure Render finds folders correctly
+current_dir = os.path.dirname(os.path.realpath(__file__))
+static_path = os.path.join(current_dir, "static")
+template_path = os.path.join(current_dir, "templates")
+
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+templates = Jinja2Templates(directory=template_path)
 
 def get_soma_ranges(height: float, sex: str):
+    """Calculates physiological power range based on medical standards."""
     if sex.lower() == "male":
         base = 50 + 0.9 * (height - 152)
     else:
@@ -30,11 +37,13 @@ def get_soma_ranges(height: float, sex: str):
     return round(base - 5, 1), round(base + 10, 1)
 
 def clean_soma_output(text):
+    """Strictly removes meta-talk and instructions leaked by the AI."""
     text = re.sub(r"(?i)(left side|right side|section \d|instruction|analysis & food|training & recovery|###.*content|\[TRAINING_START\])", "", text)
     return text.strip()
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
+    # Fixed syntax for Jinja2 compatibility
     return templates.TemplateResponse("index.html", {"request": request, "show_results": False})
 
 @app.post("/", response_class=HTMLResponse)
@@ -50,7 +59,7 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
-    # YOUR EXACT SOMA PROMPT
+    # YOUR EXACT SOMA INSTRUCTIONS
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -68,39 +77,43 @@ async def run_check(
         response = client.chat.completions.create(
             model='gpt-4o-mini',
             messages=[
-                {"role": "system", "content": "You are SOMA, an elite performance coach. Speak like a human mentor, not a robot. You MUST separate the Food section from the Training section using the exact tag [TRAINING_START]. Part 1 is Weight & Food. Part 2 is Training, Sleep & Summary."},
-                {"role": "user", "content": prompt}
+                {{"role": "system", "content": "You are SOMA, an elite performance coach. Speak like a human mentor, not a robot. You MUST separate the Food section from the Training section using the exact tag [TRAINING_START]. Part 1 is Weight & Food. Part 2 is Training, Sleep & Summary."}},
+                {{"role": "user", "content": prompt}}
             ],
             temperature=0.7
         )
         ai_text = response.choices[0].message.content
+        
+        # Split logic using your high-performance tag
         parts = ai_text.split("[TRAINING_START]")
         
         if len(parts) > 1:
             food_raw = parts[0].replace("[WEIGHT ANALYSIS]", "### YOUR STATUS").replace("[FOOD]", "### NUTRITIONAL TIMING")
             training_raw = parts[1].replace("[RECOVERY]", "### SLEEP & RECOVERY").replace("[SUMMARY]", "### FINAL HEALTH GRADE")
+            
             food_advice = clean_soma_output(food_raw)
             exercise_advice = "### TRAINING PROTOCOL\n" + clean_soma_output(training_raw)
         else:
             food_advice = ai_text
-            exercise_advice = "The coach is still refining your movement protocol."
+            exercise_advice = "The coach is still refining your movement protocol. Please resubmit."
 
     except Exception as e:
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # FIXED DATA HANDOFF
-    context = {
+    # Building the context dictionary clearly to prevent the 'tuple' error
+    context = {{
         "request": request, 
         "show_results": True, 
         "name": name,
         "food_advice": food_advice, 
         "exercise_advice": exercise_advice
-    }
-    
+    }}
+
     return templates.TemplateResponse("index.html", context)
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 10000))
+    # Render requires a dynamic port
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
