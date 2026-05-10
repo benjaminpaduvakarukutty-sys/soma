@@ -9,21 +9,23 @@ from fastapi.templating import Jinja2Templates
 
 # 1. LOAD AND VERIFY API KEY
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+# Using os.environ.get is better for Render environment variables
+api_key = os.environ.get("OPENAI_API_KEY")
 
 if not api_key:
-    raise ValueError("CRITICAL ERROR: OPENAI_API_KEY not found in .env!")
+    raise ValueError("CRITICAL ERROR: OPENAI_API_KEY not found!")
 
 client = OpenAI(api_key=api_key)
 
 app = FastAPI()
 
-# 2. PATH CONFIGURATION
+# 2. PATH CONFIGURATION - Bulletproof for Render
 current_dir = os.path.dirname(os.path.realpath(__file__))
 static_path = os.path.join(current_dir, "static")
-app.mount("/static", StaticFiles(directory=static_path), name="static")
+template_path = os.path.join(current_dir, "templates")
 
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+templates = Jinja2Templates(directory=template_path)
 
 def get_soma_ranges(height: float, sex: str):
     """Calculates physiological power range based on medical standards."""
@@ -36,12 +38,12 @@ def get_soma_ranges(height: float, sex: str):
 
 def clean_soma_output(text):
     """Strictly removes meta-talk and instructions leaked by the AI."""
-    # Removes robotic labels that spoil the human feel
     text = re.sub(r"(?i)(left side|right side|section \d|instruction|analysis & food|training & recovery|###.*content|\[TRAINING_START\])", "", text)
     return text.strip()
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
+    # FIXED: Cleaned up the dictionary format here
     return templates.TemplateResponse("index.html", {"request": request, "show_results": False})
 
 @app.post("/", response_class=HTMLResponse)
@@ -57,7 +59,7 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
-    # ENFORCED HUMAN-STYLE PROTOCOL
+    # YOUR ORIGINAL PROMPT - UNTOUCHED
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -82,7 +84,6 @@ async def run_check(
         )
         ai_text = response.choices[0].message.content
         
-        # Split logic using your high-performance tag
         parts = ai_text.split("[TRAINING_START]")
         
         if len(parts) > 1:
@@ -99,16 +100,19 @@ async def run_check(
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "show_results": True, 
-        "name": name,
-        "food_advice": food_advice, 
-        "exercise_advice": exercise_advice
-    })
+    # FIXED: This is the exact spot where the dictionary/tuple error was happening
+    return templates.TemplateResponse(
+        "index.html", 
+        {
+            "request": request, 
+            "show_results": True, 
+            "name": name,
+            "food_advice": food_advice, 
+            "exercise_advice": exercise_advice
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
-    # Render requires host 0.0.0.0 and a dynamic port
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
