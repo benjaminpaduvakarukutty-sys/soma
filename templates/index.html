@@ -30,9 +30,10 @@
         .main-layout { 
             display: flex; 
             align-items: center; 
-            gap: 0; 
+            gap: 20px; 
             width: 100%;
             min-height: 70vh;
+            flex-wrap: wrap; /* NEW: Allows stacking on mobile */
         }
 
         /* LEFT SIDE: IMAGE (50%) */
@@ -42,7 +43,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 70vh;
+            min-width: 320px; /* NEW: Prevents shrinking too much */
         }
 
         /* RIGHT SIDE: FORM (50%) */
@@ -50,17 +51,19 @@
             flex: 1;
             padding: 20px 40px;
             box-sizing: border-box;
-            background: rgba(0, 0, 0, 0.6); /* Transparent background to see floating emojis behind */
+            background: rgba(0, 0, 0, 0.6); 
             border-radius: 8px;
+            min-width: 320px; /* NEW: Prevents shrinking too much */
         }
 
         .builder-img { 
-            height: 80% !important; 
-            width: auto !important; 
+            max-width: 100%; /* NEW: Fixes phone width overflow */
+            height: auto !important; /* NEW: Fixes phone height scaling */
             display: block;
             position: relative;
             z-index: 5;
             object-fit: contain;
+            max-height: 80vh;
         }
 
         /* FULL WEBSITE EMOJI LAYER */
@@ -106,7 +109,7 @@
             padding: 20px; 
             box-sizing: border-box; 
         }
-        .results-container { display: flex; gap: 25px; margin-top: 20px; width: 100%; }
+        .results-container { display: flex; gap: 25px; margin-top: 20px; width: 100%; flex-wrap: wrap; }
         .column { 
             flex: 1; 
             background: rgba(255, 255, 255, 0.05); 
@@ -117,6 +120,7 @@
             white-space: pre-wrap; 
             font-size: 16px;
             line-height: 1.6;
+            min-width: 300px;
         }
 
         .run-btn { 
@@ -124,6 +128,21 @@
             border: none; cursor: pointer; font-weight: bold; text-transform: uppercase;
         }
         .run-btn:hover { background: #0055ff; }
+
+        /* MOBILE SPECIFIC OVERRIDES */
+        @media (max-width: 768px) {
+            .results-full-screen {
+                width: 100%;
+                margin-left: 0;
+                padding: 10px;
+            }
+            .health-card {
+                padding: 20px;
+            }
+            .soma-title {
+                font-size: 36px;
+            }
+        }
     </style>
 </head>
 <body>
