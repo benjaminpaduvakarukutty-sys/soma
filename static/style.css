@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800&family=Quicksand:wght@300&display=swap');
+
+:root {
+    --bg-dark: #05070a;
+    --dark-blue: #0044cc;   
+    --light-blue: #00d4ff;  
+    --card-bg: #0d1117;
+    --pure-white: #ffffff; 
+}
+
+body {
+    background-color: var(--bg-dark);
+    margin: 0;
+    font-family: sans-serif;
+}
+
+header {
+    background-color: var(--card-bg);
+    padding: 30px;
+    text-align: center;
+    border-bottom: 2px solid var(--dark-blue);
+}
+
+.brand-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.soma-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--pure-white); 
+    margin: 0;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+}
+
+.health-checker {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.4rem;
+    font-style: italic;
+    color: var(--pure-white); 
+    margin-top: 5px;
+    letter-spacing: 3px;
+    opacity: 0.9; 
+}
+
+.container {
+    padding: 50px;
+    display: flex;
+    justify-content: center;
+}
+
+.health-card {
+    background: #111;
+    border: 1px solid var(--dark-blue);
+    border-radius: 15px;
+    padding: 40px;
+    /* CHANGE: Removed fixed 350px width to allow results to expand */
+    width: 100%; 
+    max-width: 1200px;
+    text-align: left; 
+    box-shadow: 0 0 20px rgba(0, 68, 204, 0.2);
+    transition: width 0.4s ease-in-out;
+    position: relative; 
+}
+
+/* --- THE BIG RIGHT-SIDE LOADER --- */
+.loader {
+    width: 60px;          
+    height: 135px;        
+    position: absolute;   
+    top: 10px;            
+    right: 5px;           
+    z-index: 10;
+}
+
+.loader:after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 3px 5px;
+    border-top: 1px solid #bbb6aa;
+    border-bottom: 4px solid #bbb6aa;
+    background: 
+        linear-gradient(#612329 0 0) bottom no-repeat content-box, 
+        #e4e0d7;
+    mix-blend-mode: darken;
+}
+
+.loader:before {
+    content: "";
+    position: absolute;
+    inset: -25px calc(50% - 3px) 10px;
+    background: #eb6b3e;   
+    transform-origin: bottom;
+    transform: rotate(8deg);
+}
+
+.results-container {
+    display: flex; 
+    /* CHANGE: Added flex-direction and wrap for better layout */
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 30px;
+    width: 100%;
+}
+
+.column {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #222;
+    /* CHANGE: Added min-height to make boxes vertically bigger */
+    min-height: 500px;
+    /* CHANGE: Ensures AI text doesn't bunch up */
+    white-space: pre-wrap; 
+}
+
+.column h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--light-blue);
+    font-size: 1.1rem;
+    margin-top: 0;
+    border-bottom: 1px solid var(--dark-blue);
+    padding-bottom: 10px;
+}
+
+.result-content {
+    color: var(--pure-white);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 15px;
+}
+
+.wide-mode {
+    width: 800px; 
+}
+
+/* --- IMAGE SIZE ADJUSTMENT --- */
+.builder-img {
+    height: 60%; 
+    width: auto;
+    object-fit: cover;
+}
