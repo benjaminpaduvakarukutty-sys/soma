@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOMA | Health Checker</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { background-color: #000; font-family: sans-serif; color: white; margin: 0; overflow-x: hidden; }
+        .soma-title { font-size: 48px; margin: 0; font-weight: bold; }
+        .health-checker { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; color: #888; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
+        .brand-container { text-align: left; padding: 20px; }
+        
+        label, .unit-text { color: white; font-size: 14px; display: block; margin-bottom: 5px; text-transform: uppercase; }
+        .input-row { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; flex: 1; }
+        
+        input, select, textarea { 
+            width: 100%; padding: 12px; background: #111; border: 1px solid #333; 
+            border-radius: 4px; color: #fff; font-size: 14px; box-sizing: border-box;
+        }
+
+        textarea { resize: vertical; min-height: 130px; font-family: sans-serif; }
+        
+        .unit-container { display: flex; align-items: center; gap: 5px; }
+        .unit-container input { flex: 1; }
+
+        /* 50/50 SPLIT LAYOUT */
+        .main-layout { 
+            display: flex; 
+            align-items: center; 
+            gap: 0; 
+            width: 100%;
+            min-height: 70vh;
+        }
+
+        /* LEFT SIDE: IMAGE (50%) */
+        .image-section { 
+            flex: 1; 
+            position: relative; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 70vh;
+        }
+
+        /* RIGHT SIDE: FORM (50%) */
+        .health-card {
+            flex: 1;
+            padding: 20px 40px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.6); /* Transparent background to see floating emojis behind */
+            border-radius: 8px;
+        }
+
+        .builder-img { 
+            height: 80% !important; 
+            width: auto !important; 
+            display: block;
+            position: relative;
+            z-index: 5;
+            object-fit: contain;
+        }
+
+        /* FULL WEBSITE EMOJI LAYER */
+        .bg-emoji-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            font-size: 28px;
+            user-select: none;
+            opacity: 0.4;
+        }
+
+        /* NON-UNIFORM FLOW ANIMATIONS */
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(100px, -100px) rotate(20deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        @keyframes pulsePower {
+            0% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.5); opacity: 0.6; }
+            100% { transform: scale(1); opacity: 0.3; }
+        }
+        @keyframes highEnergy {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(50px, 50px); }
+            75% { transform: translate(-50px, -50px); }
+            100% { transform: translate(0,0); }
+        }
+
+        /* RESULTS DASHBOARD */
+        .results-full-screen { 
+            width: 96vw; 
+            margin-left: calc(-48vw + 50%); 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .results-container { display: flex; gap: 25px; margin-top: 20px; width: 100%; }
+        .column { 
+            flex: 1; 
+            background: rgba(255, 255, 255, 0.05); 
+            padding: 35px; 
+            border-radius: 4px; 
+            border: 1px solid #333; 
+            min-height: 75vh; 
+            white-space: pre-wrap; 
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .run-btn { 
+            width: 100%; padding: 15px; background: #0044cc; color: white; 
+            border: none; cursor: pointer; font-weight: bold; text-transform: uppercase;
+        }
+        .run-btn:hover { background: #0055ff; }
+    </style>
+</head>
+<body>
+    <div class="bg-emoji-layer">
+        <span class="floating-emoji" style="top: 10%; left: 5%; animation: drift 15s infinite;">🥦</span>
+        <span class="floating-emoji" style="top: 30%; left: 15%; animation: drift 18s infinite;">🥑</span>
+        <span class="floating-emoji" style="top: 50%; left: 25%; animation: drift 20s infinite;">🥩</span>
+        <span class="floating-emoji" style="top: 70%; left: 5%; animation: drift 14s infinite;">🍳</span>
+        <span class="floating-emoji" style="top: 85%; left: 20%; animation: drift 17s infinite;">🥗</span>
+        <span class="floating-emoji" style="top: 5%; right: 10%; animation: drift 19s infinite;">🥬</span>
+        <span class="floating-emoji" style="top: 25%; right: 20%; animation: drift 16s infinite;">🥕</span>
+        <span class="floating-emoji" style="top: 45%; right: 5%; animation: drift 22s infinite;">🥔</span>
+        <span class="floating-emoji" style="top: 65%; right: 15%; animation: drift 13s infinite;">🍎</span>
+        <span class="floating-emoji" style="top: 85%; right: 30%; animation: drift 21s infinite;">🍌</span>
+
+        <span class="floating-emoji" style="top: 15%; left: 40%; animation: pulsePower 5s infinite;">💪</span>
+        <span class="floating-emoji" style="top: 40%; left: 45%; animation: pulsePower 6s infinite;">🏋️‍♂️</span>
+        <span class="floating-emoji" style="top: 60%; left: 35%; animation: pulsePower 4s infinite;">🤸‍♂️</span>
+        <span class="floating-emoji" style="top: 80%; left: 50%; animation: pulsePower 7s infinite;">🧗</span>
+        <span class="floating-emoji" style="top: 20%; right: 40%; animation: pulsePower 5.5s infinite;">🦍</span>
+        <span class="floating-emoji" style="top: 55%; right: 45%; animation: pulsePower 4.5s infinite;">🏗️</span>
+        <span class="floating-emoji" style="top: 75%; right: 40%; animation: pulsePower 6.5s infinite;">🍗</span>
+        <span class="floating-emoji" style="top: 5%; left: 60%; animation: pulsePower 8s infinite;">🥛</span>
+        <span class="floating-emoji" style="top: 90%; left: 70%; animation: pulsePower 5s infinite;">🥚</span>
+        <span class="floating-emoji" style="top: 35%; right: 60%; animation: pulsePower 6s infinite;">🥣</span>
+
+        <span class="floating-emoji" style="top: 50%; left: 50%; animation: highEnergy 3s infinite;">⚡</span>
+        <span class="floating-emoji" style="top: 10%; left: 80%; animation: highEnergy 2.5s infinite;">🧱</span>
+        <span class="floating-emoji" style="top: 30%; right: 80%; animation: highEnergy 3.5s infinite;">🔨</span>
+        <span class="floating-emoji" style="top: 70%; right: 70%; animation: highEnergy 2s infinite;">😤</span>
+        <span class="floating-emoji" style="top: 5%; right: 50%; animation: highEnergy 4s infinite;">🍯</span>
+        <span class="floating-emoji" style="bottom: 10%; left: 10%; animation: highEnergy 3.2s infinite;">💧</span>
+        <span class="floating-emoji" style="top: 40%; right: 10%; animation: highEnergy 2.8s infinite;">🫐</span>
+        <span class="floating-emoji" style="bottom: 20%; right: 20%; animation: highEnergy 3.8s infinite;">🥜</span>
+        <span class="floating-emoji" style="top: 60%; right: 25%; animation: highEnergy 2.2s infinite;">🍤</span>
+        <span class="floating-emoji" style="bottom: 5%; right: 50%; animation: highEnergy 3.1s infinite;">🐟</span>
+    </div>
+
+    <header>
+        <div class="brand-container">
+            <h1 class="soma-title">SOMA</h1>
+            <span class="health-checker">health checker</span>
+        </div>
+    </header>
+
+    <div class="container">
+        {% if not show_results %}
+        <div class="main-layout">
+            <div class="image-section">
+                <img src="/static/image.png" alt="Bodybuilder" class="builder-img">
+            </div>
+
+            <form class="health-card" id="health-form" method="post" action="/">
+                <div class="input-group"><label>Name</label><input type="text" name="name" required></div>
+                
+                <div class="input-row">
+                    <div class="input-group"><label>Age</label><input type="number" name="age" required></div>
+                    <div class="input-group">
+                        <label>Sex</label>
+                        <select name="sex">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Weight</label>
+                        <div class="unit-container">
+                            <input type="number" name="weight" step="0.1" required>
+                            <span class="unit-text">kg</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Height</label>
+                        <div class="unit-container">
+                            <input type="number" name="height" step="0.1" required>
+                            <span class="unit-text">cm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Sleep</label>
+                    <div class="unit-container">
+                        <input type="number" name="sleep" step="0.1" required>
+                        <span class="unit-text">hours</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>SOMA HELP BOX</label>
+                    <textarea name="lifestyle_story" 
+                              placeholder="Describe your daily physical labor (e.g. heavy lifting at work, standing all day, or desk job). What is your current energy level throughout the day? What specific body change are you looking for?" 
+                              required></textarea>
+                </div>
+
+                <button type="submit" class="run-btn">RUN HEALTH CHECK</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="results-full-screen">
+            <h2>Diagnostic: {{ name }}</h2>
+            <div class="results-container">
+                <div class="column">
+                    <h3>Food</h3>
+                    <div class="result-content">{{ food_advice }}</div>
+                </div>
+                <div class="column">
+                    <h3>Exercise</h3>
+                    <div class="result-content">{{ exercise_advice }}</div>
+                </div>
+            </div>
+            <br>
+            <a href="/" style="color: cyan; text-decoration: none; position: relative; z-index: 10;">← NEW DIAGNOSTIC</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
