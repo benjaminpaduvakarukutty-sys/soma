@@ -9,7 +9,6 @@ from fastapi.templating import Jinja2Templates
 
 # 1. LOAD AND VERIFY API KEY
 load_dotenv()
-# Using os.environ.get is better for Render environment variables
 api_key = os.environ.get("OPENAI_API_KEY")
 
 if not api_key:
@@ -19,7 +18,7 @@ client = OpenAI(api_key=api_key)
 
 app = FastAPI()
 
-# 2. PATH CONFIGURATION - Bulletproof for Render
+# 2. PATH CONFIGURATION
 current_dir = os.path.dirname(os.path.realpath(__file__))
 static_path = os.path.join(current_dir, "static")
 template_path = os.path.join(current_dir, "templates")
@@ -28,7 +27,6 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 templates = Jinja2Templates(directory=template_path)
 
 def get_soma_ranges(height: float, sex: str):
-    """Calculates physiological power range based on medical standards."""
     if sex.lower() == "male":
         base = 50 + 0.9 * (height - 152)
     else:
@@ -37,13 +35,12 @@ def get_soma_ranges(height: float, sex: str):
     return round(base - 5, 1), round(base + 10, 1)
 
 def clean_soma_output(text):
-    """Strictly removes meta-talk and instructions leaked by the AI."""
     text = re.sub(r"(?i)(left side|right side|section \d|instruction|analysis & food|training & recovery|###.*content|\[TRAINING_START\])", "", text)
     return text.strip()
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
-    # FIXED: Cleaned up the dictionary format here
+    # FIXED SYNTAX HERE
     return templates.TemplateResponse("index.html", {"request": request, "show_results": False})
 
 @app.post("/", response_class=HTMLResponse)
@@ -59,7 +56,6 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
-    # YOUR ORIGINAL PROMPT - UNTOUCHED
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -83,13 +79,11 @@ async def run_check(
             temperature=0.7
         )
         ai_text = response.choices[0].message.content
-        
         parts = ai_text.split("[TRAINING_START]")
         
         if len(parts) > 1:
             food_raw = parts[0].replace("[WEIGHT ANALYSIS]", "### YOUR STATUS").replace("[FOOD]", "### NUTRITIONAL TIMING")
             training_raw = parts[1].replace("[RECOVERY]", "### SLEEP & RECOVERY").replace("[SUMMARY]", "### FINAL HEALTH GRADE")
-            
             food_advice = clean_soma_output(food_raw)
             exercise_advice = "### TRAINING PROTOCOL\n" + clean_soma_output(training_raw)
         else:
@@ -100,7 +94,7 @@ async def run_check(
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # FIXED: This is the exact spot where the dictionary/tuple error was happening
+    # FIXED SYNTAX HERE - REMOVED THE TUPLE CONFLICT
     return templates.TemplateResponse(
         "index.html", 
         {
