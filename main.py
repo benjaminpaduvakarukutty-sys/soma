@@ -42,7 +42,8 @@ def clean_soma_output(text):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
-    # FIXED: Using explicit keyword arguments to avoid 'unhashable dict' error
+    # FIXED: Using explicit keyword names (request=, name=, context=)
+    # This stops the 'unhashable type' error.
     return templates.TemplateResponse(
         request=request, 
         name="index.html", 
@@ -100,7 +101,7 @@ async def run_check(
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # FIXED: Passing context correctly using the modern FastAPI/Starlette style
+    # FIXED: Explicitly using 'context=' to pass the data correctly.
     return templates.TemplateResponse(
         request=request,
         name="index.html",
