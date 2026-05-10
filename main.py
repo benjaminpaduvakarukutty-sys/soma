@@ -7,7 +7,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-# 1. LOAD AND VERIFY API KEY
 load_dotenv()
 api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -15,16 +14,12 @@ if not api_key:
     raise ValueError("CRITICAL ERROR: OPENAI_API_KEY not found!")
 
 client = OpenAI(api_key=api_key)
-
 app = FastAPI()
 
-# 2. PATH CONFIGURATION
-current_dir = os.path.dirname(os.path.realpath(__file__))
-static_path = os.path.join(current_dir, "static")
-template_path = os.path.join(current_dir, "templates")
-
-app.mount("/static", StaticFiles(directory=static_path), name="static")
-templates = Jinja2Templates(directory=template_path)
+# Bulletproof paths for Render
+base_path = os.path.dirname(os.path.realpath(__file__))
+app.mount("/static", StaticFiles(directory=os.path.join(base_path, "static")), name="static")
+templates = Jinja2Templates(directory=os.path.join(base_path, "templates"))
 
 def get_soma_ranges(height: float, sex: str):
     if sex.lower() == "male":
@@ -55,7 +50,7 @@ async def run_check(
 ):
     min_range, max_range = get_soma_ranges(height, sex)
     
-    # YOUR EXACT PROMPT - UNCHANGED
+    # YOUR EXACT SOMA PROMPT
     prompt = f"""
     User: {name} | {age}y/o | {sex} | {weight}kg | {height}cm | {sleep}h Sleep.
     Lifestyle: {lifestyle_story}
@@ -94,8 +89,8 @@ async def run_check(
         food_advice = "Connection Error."
         exercise_advice = str(e)
 
-    # THE FIX: We build the dictionary clearly to avoid the 'tuple' error
-    response_data = {
+    # FIXED DATA HANDOFF
+    context = {
         "request": request, 
         "show_results": True, 
         "name": name,
@@ -103,10 +98,9 @@ async def run_check(
         "exercise_advice": exercise_advice
     }
     
-    return templates.TemplateResponse("index.html", response_data)
+    return templates.TemplateResponse("index.html", context)
 
 if __name__ == "__main__":
     import uvicorn
-    # This port logic is required for Render to link to your URL
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
